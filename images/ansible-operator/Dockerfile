@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=$BUILDPLATFORM golang:1.15 as builder
+FROM --platform=$BUILDPLATFORM registry.ci.ciscolabs.com/cpsg_base-apps/golang/releases/golang:1.16.6-cisco2 as builder
 ARG TARGETARCH
 
 WORKDIR /workspace
@@ -17,7 +17,7 @@ COPY . .
 RUN GOOS=linux GOARCH=$TARGETARCH make build/ansible-operator
 
 # Final image.
-FROM quay.io/operator-framework/ansible-operator-base:master-d31e4e800c0f159a2cd9f5ae375dbda00789f474
+FROM dockerhub.cisco.com/cloudcenter-dev-docker/custom/cloudcenter/andromeda/ansible-operator-base:0.0.1-abmitra
 
 ENV HOME=/opt/ansible \
     USER_NAME=ansible \

@@ -4,7 +4,7 @@ SHELL = /bin/bash
 # This value must be updated to the release tag of the most recent release, a change that must
 # occur in the release commit. IMAGE_VERSION will be removed once each subproject that uses this
 # version is moved to a separate repo and release process.
-export IMAGE_VERSION = v1.6.0
+export IMAGE_VERSION = v1.5.0
 # Build-time variables to inject into binaries
 export SIMPLE_VERSION = $(shell (test "$(shell git describe)" = "$(shell git describe --abbrev=0)" && echo $(shell git describe)) || echo $(shell git describe --abbrev=0)+git)
 export GIT_VERSION = $(shell git describe --dirty --tags --always)
@@ -79,7 +79,8 @@ build/scorecard-test build/scorecard-test-kuttl build/custom-scorecard-tests:
 
 # Convenience wrapper for building all remotely hosted images.
 .PHONY: image-build
-IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
+#IMAGE_TARGET_LIST = operator-sdk helm-operator ansible-operator scorecard-test scorecard-test-kuttl
+IMAGE_TARGET_LIST = ansible-operator 
 image-build: $(foreach i,$(IMAGE_TARGET_LIST),image/$(i)) ## Build all images.
 
 # Build an image.
@@ -89,8 +90,17 @@ ifneq ($(shell test -t 0; echo $$?),0)
 DOCKER_PROGRESS = --progress plain
 endif
 image/%: export DOCKER_CLI_EXPERIMENTAL = enabled
-image/%:
-	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:dev -f ./images/$*/Dockerfile --load .
+image/%:	
+	#docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:base -f ./images/ansible-operator/base.Dockerfile --load .
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:base -f ./images/ansible-operator/base.cisco.Dockerfile --load .
+	docker tag 	$(DOCKER_PROGRESS) $(BUILD_IMAGE_REPO)/$*:base  dockerhub.cisco.com/cloudcenter-dev-docker/custom/cloudcenter/andromeda/ansible-operator-base:0.0.1-abmitra
+	docker pull registry.ci.ciscolabs.com/cpsg_base-apps/golang/releases/golang:1.16.6-cisco2
+	docker buildx build $(DOCKER_PROGRESS) -t $(BUILD_IMAGE_REPO)/$*:final -f ./images/ansible-operator/Dockerfile --load .
+	docker tag 	$(DOCKER_PROGRESS) $(BUILD_IMAGE_REPO)/$*:final  dockerhub.cisco.com/cloudcenter-dev-docker/custom/cloudcenter/andromeda/ansible-operator:v2.10.1
+	#docker push dockerhub.cisco.com/cloudcenter-dev-docker/custom/cloudcenter/andromeda/ansible-operator-base:0.0.1-abmitra
+	docker push dockerhub.cisco.com/cloudcenter-dev-docker/custom/cloudcenter/andromeda/ansible-operator:v2.10.1
+	
+
 
 ##@ Release
 
